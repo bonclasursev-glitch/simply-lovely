@@ -1,0 +1,15 @@
+[project]
+name = "simply-lovely"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "datetime>=6.0",
+    "fastf1>=3.8.3",
+    "matplotlib>=3.11.1",
+    "numpy>=2.5.1",
+    "pandas>=2.3.3",
+    "plotly>=6.9.0",
+    "streamlit>=1.60.0",
+]
