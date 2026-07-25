@@ -1,0 +1,4 @@
+[DASHBOARD_DEFAULTS]
+dashboard_title = "Race Strategy Dashboard"
+refresh_rate = 600
+dashboard_layout = "wide"
