@@ -1,0 +1,187 @@
+teams:
+  Ferrari:
+    drivers:
+      LEC:
+        fullname: Charles Leclerc
+        nationality: Monaco
+        number: 16
+        colour: 232,0,45,1
+      HAM:
+        fullname: Lewis Hamilton
+        nationality: Great Britain
+        number: 44
+        colour: 232,0,45,0.6
+    teaminfo:
+      colour: 232,0,45,1
+      country: Italy
+      short: FER
+
+  Red Bull Racing:
+    drivers:
+      VER:
+        fullname: Max Verstappen
+        nationality: Netherlands
+        number: 3
+        colour: 54,113,198,1
+      HAD:
+        fullname: Isack Hadjar
+        nationality: France
+        number: 6
+        colour: 54,113,198,0.6
+    teaminfo:
+      colour: 54,113,198,1
+      country: Austria
+      short: RBR
+
+  Mercedes:
+    drivers:
+      ANT:
+        fullname: Kimi Antonelli
+        nationality: Italy
+        number: 12
+        colour: 39,244,210,1
+      RUS:
+        fullname: George Russell
+        nationality: Great Britain
+        number: 63
+        colour: 39,244,210,0.6
+    teaminfo:
+      colour: 39,244,210,1
+      country: Germany
+      short: MER
+
+  McLaren:
+    drivers:
+      NOR:
+        fullname: Lando Norris
+        nationality: Great Britain
+        number: 4
+        colour: 255,128,0,0.6
+      PIA:
+        fullname: Oscar Piastri
+        nationality: Australia
+        number: 81
+        colour: 255,128,0,1
+    teaminfo:
+      colour: 255,128,0,1
+      country: Great Britain
+      short: MCL
+
+  Aston Martin:
+    drivers:
+      ALO:
+        fullname: Fernando Alonso
+        nationality: Spain
+        number: 14
+        colour: 34,153,113,1
+      STR:
+        fullname: Lance Stroll
+        nationality: Canada
+        number: 18
+        colour: 34,153,113,0.6
+    teaminfo:
+      colour: 34,153,113,1
+      country: Great Britain
+      short: AST
+
+  Alpine:
+    drivers:
+      GAS:
+        fullname: Pierre Gasly
+        nationality: France
+        number: 10
+        colour: 0,161,232,1
+      COL:
+        fullname: Franco Colapinto
+        nationality: Argentina
+        number: 43
+        colour: 0,161,232,0.6
+    teaminfo:
+      colour: 0,161,232,1
+      country: France
+      short: ALP
+
+  Haas F1 Team:
+    drivers:
+      OCO:
+        fullname: Esteban Ocon
+        nationality: France
+        number: 31
+        colour: 222,225,226,1
+      BEA:
+        fullname: Oliver Bearman
+        nationality: Great Britain
+        number: 87
+        colour: 222,225,226,0.6
+    teaminfo:
+      colour: 222,225,226,1
+      country: United States
+      short: HAA
+
+  Racing Bulls:
+    drivers:
+      LAW:
+        fullname: Liam Lawson
+        nationality: New Zealand
+        number: 30
+        colour: 102,146,255,1
+      LIN:
+        fullname: Arvid Lindblad
+        nationality: Great Britain
+        number: 40
+        colour: 102,146,255,0.6
+    teaminfo:
+      colour: 102,146,255,1
+      country: Italy
+      short: RAB
+
+  Williams:
+    drivers:
+      ALB:
+        fullname: Alexander Albon
+        nationality: Thailand
+        number: 23
+        colour: 24,104,219,1
+      SAI:
+        fullname: Carlos Sainz
+        nationality: Spain
+        number: 55
+        colour: 24,104,219,0.6
+    teaminfo:
+      colour: 24,104,219,1
+      country: Great Britain
+      short: WIL
+
+  Audi:
+    drivers:
+      HUL:
+        fullname: Nico Hülkenberg
+        nationality: Germany
+        number: 27
+        colour: 255,45,0,1
+      BOR:
+        fullname: Gabriel Bortoleto
+        nationality: Brazil
+        number: 5
+        colour: 255,45,0,0.6
+    teaminfo:
+      colour: 255,45,0,1
+      country: Germany
+      short: AUD
+
+  Cadillac:
+    drivers:
+      PER:
+        fullname: Sergio Perez
+        nationality: Mexico
+        number: 11
+        colour: 170,170,173,1
+      BOT:
+        fullname: Valtteri Bottas
+        nationality: Finland
+        number: 77
+        colour: 170,170,173,0.6
+    teaminfo:
+      colour: 170,170,173,1
+      country: United States
+      short: CAD
