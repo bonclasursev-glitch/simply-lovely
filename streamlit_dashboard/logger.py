@@ -12,14 +12,14 @@ log_filename = os.path.join(logs_directory, f"SimplyLovely_{datetime_now}.log")
 def get_logger(module_name):
     # Create logger witht he appropriate name
     logger = logging.getLogger(module_name)
-    logger.setLevel(logging.debug)
+    logger.setLevel(logging.DEBUG)
 
     # Avoid duplication of handlers
     if not logger.handlers:
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.debug)
+        console_handler.setLevel(logging.DEBUG)
         file_handler = logging.FileHandler(log_filename)
-        file_handler.setLevel(logging.debug)
+        file_handler.setLevel(logging.DEBUG)
         formatter = logging.Formatter(logs_format)
         console_handler.setFormatter(formatter)
         file_handler.setFormatter(formatter)

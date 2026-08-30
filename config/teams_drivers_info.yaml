@@ -185,3 +185,10 @@ teams:
       colour: 170,170,173,1
       country: United States
       short: CAD
+
+compound_colours:
+    SOFT: 225,6,0,1
+    MEDIUM: 255,209,46,1
+    HARD: 250,249,246,1
+    INTERMEDIATE: 67,176,42,1
+    WET: 0,103,173,1
