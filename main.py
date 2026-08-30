@@ -21,11 +21,11 @@ def run():
     logger.info("Initialising Visualizer")
     visualizer = Visualizer(config)
     logger.info("Initialising Layout Manager")
-    layout_manager = LayoutManager(config, visualizer)
+    layout_manager = LayoutManager(config, logger, visualizer)
     logger.info("Initialising Dashboard Orchestrator")
     dashboard_orchestrator = DashboardOrchestrator(config, data_processor, layout_manager)
     logger.info("And it's lights out and away we go!")
     dashboard_orchestrator.run_dashboard()
-
+    
 if __name__ == '__main__':
     run()
