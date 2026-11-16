@@ -5,7 +5,7 @@ from datetime import datetime
 # create directory for dev logs & format logs
 logs_directory = "logs"
 os.makedirs(logs_directory, exist_ok = True)
-logs_format = "%(datetime)s - %(name)s - %(threadname)s - %(levelName)s - %(message)s"
+logs_format = "%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s"
 datetime_now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 log_filename = os.path.join(logs_directory, f"SimplyLovely_{datetime_now}.log")
 

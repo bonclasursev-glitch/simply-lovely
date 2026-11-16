@@ -1,2 +1,17 @@
-.vscode
+# Secrets
 .env
+
+# Editor / tooling
+.vscode/
+.serena/
+
+# Python build artifacts
+__pycache__/
+*.pyc
+
+# Local data and caches (rebuilt on each machine)
+dashboard_cache/
+fastf1_cache/
+logs/
+downloads/
+downloads_old/
