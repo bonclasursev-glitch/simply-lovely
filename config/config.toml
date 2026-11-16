@@ -2,3 +2,10 @@
 dashboard_title = "Race Strategy Dashboard"
 refresh_rate = 600
 dashboard_layout = "wide"
+
+[CACHE]
+# Shared by every dashboard user and by preload_cache.py, relative paths start at the repo root
+fastf1_cache_dir = "fastf1_cache"
+dashboard_cache_dir = "dashboard_cache"
+# Season tables (standings vs PU elements) are rebuilt from the FIA site once they are older than this
+season_max_age_hours = 12

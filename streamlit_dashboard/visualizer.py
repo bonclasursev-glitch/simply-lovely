@@ -1,34 +1,42 @@
 # Import local modules
 from streamlit_dashboard.logger import get_logger
-from streamlit_dashboard.data_processor import DataProcessor
+from streamlit_dashboard.data_processor import DataProcessor, NEUTRAL_COLOUR, PU_COLUMNS
+from streamlit_dashboard.cache_store import REPO_ROOT
 # Import Python libraries
 import plotly.graph_objs as go
-from plotly.subplots import make_subplots
+import plotly.colors as pc
 import yaml
 import streamlit as st
-import pandas as pd
 
 
 class Visualizer:
     def __init__(self, logger):
         self.logger = logger
-        with open("C:/Users/boncl/Repos/simply-lovely/config/teams_drivers_info.yaml", "r") as file:
+        with open(REPO_ROOT / "config" / "teams_drivers_info.yaml", "r") as file:
             self.config_info = yaml.safe_load(file)
         self.data_processor = DataProcessor
+        self.driver_colours = {}
+
+    def set_driver_colours(self, driver_colours):
+        # Colours of the selected event's (or season's) drivers, worked out by the DataProcessor from FastF1's driver info
+        self.driver_colours = dict(driver_colours)
+
+    def driver_colour(self, driver):
+        # Drivers missing from the driver info are drawn in a neutral colour rather than guessed
+        return f"rgba({self.driver_colours.get(driver, NEUTRAL_COLOUR)})"
 
     def create_race_plot(self, race_event_laps, selected_event):
         race_plot = go.Figure()
 
         for driver in race_event_laps["Driver"].unique():
             driver_laps = race_event_laps[race_event_laps["Driver"] == driver]
-            driver_team = race_event_laps.loc[race_event_laps['Driver']== driver, 'Team'].unique()[0]
             race_plot.add_scatter(
                 x=driver_laps["LapNumber"],
                 y=driver_laps["Position"],
                 mode="lines",
                 name=driver,
                 line=dict(
-                    color=f"rgba({self.config_info['teams'][driver_team]['drivers'][driver]['colour']})"
+                    color=self.driver_colour(driver)
                 ))
 
         race_plot.update_yaxes(autorange="reversed", range=[22.5,0.5])
@@ -47,16 +55,21 @@ class Visualizer:
         )
 
         for driver in race_event_laps["Driver"].unique():
-            driver_laps = race_event_laps[race_event_laps["Driver"] == driver]
+            driver_laps = race_event_laps[race_event_laps["Driver"] == driver].sort_values("LapNumber")
+            # One bar per run of consecutive laps on the same compound instead of one per lap, which keeps the
+            # figure to a few dozen traces so it builds and renders quickly
+            compound = driver_laps["Compound"].fillna("")
+            new_run = (compound != compound.shift()) | (driver_laps["LapNumber"].diff() != 1)
 
-            for _, lap in driver_laps.iterrows():
+            for _, run in driver_laps.groupby(new_run.cumsum()):
                 tyre_strategy_plot.add_trace(
                     go.Bar(
-                        x = [1],
+                        x = [len(run)],
                         y = [driver],
-                        base = lap['LapNumber'] -1,
+                        base = run['LapNumber'].iat[0] -1,
                         orientation='h',
-                        marker_color = f"rgba({self.config_info['compound_colours'][lap['Compound']]})",
+                        # FastF1 leaves Compound empty on some laps (e.g. not recorded), these are drawn grey
+                        marker_color = f"rgba({self.config_info['compound_colours'].get(run['Compound'].iat[0], '150,150,150,1')})",
                         marker_line_width=0,
                         showlegend= False
                     )
@@ -92,20 +105,19 @@ class Visualizer:
         for driver in laps_violin['Driver'].unique():
             driver_laps = laps_violin[laps_violin['Driver'] == driver]
             driver_mean = driver_laps['LapTime'].dt.total_seconds().mean()
-            driver_team = driver_laps['Team'].iat[0]
-            driver_colour = self.config_info['teams'][driver_team]['drivers'][driver]['colour']
+            driver_colour = self.driver_colour(driver)
 
             laptime_violin_plot.add_trace(go.Violin(
                 y=driver_laps['LapTime'].dt.total_seconds(),
                 name= driver,
                 showlegend= False,
-                line=dict(color=f"rgba({driver_colour})")
+                line=dict(color=driver_colour)
             ))
             laptime_violin_plot.add_trace(go.Scatter(
                 y = [driver_mean],
                 x = [driver],
                 mode ="markers",
-                marker= dict(symbol="diamond", size = 5, color=f"rgba({driver_colour})"
+                marker= dict(symbol="diamond", size = 5, color=driver_colour
                         ),
                 showlegend = False)
             )
@@ -229,30 +241,192 @@ class Visualizer:
         ))
         return quali_strategy_plot
 
-    def create_quali_fastest_comparison_plot(self, quali_event_laps, selected_event, selected_drivers):
-        quali_laps_all = quali_event_laps.dropna(subset=["LapTime"])
-        fastest_by_driver = quali_laps_all.sort_values("LapTime").drop_duplicates(subset="Driver", keep = "first").sort_values("LapTime")
-
+    def create_quali_fastest_comparison_plot(self, quali_telemetry, selected_event, selected_drivers):
+        # quali_telemetry holds the speed trace of each driver's fastest lap, precomputed by the DataProcessor
         quali_velocity_plot = go.Figure()
         hover_template = "Lap Time: %{customdata} s<br>Velocity: %{x} m/s<br>Distance: %{y} m"
         for driver in selected_drivers:
-            driver_lap = fastest_by_driver[fastest_by_driver['Driver'] == driver]
-            if driver_lap.empty:
+            telemetry = quali_telemetry[quali_telemetry['Driver'] == driver]
+            if telemetry.empty:
                 st.markdown(f"There are no fast laps recorded during the Qualifying session of {selected_event} for {driver}. Plotting velocity chart for other selected drivers.")
                 continue
-            driver_team = driver_lap['Team'].min()
-            driver_colour = self.config_info['teams'][driver_team]['drivers'][driver]['colour']
-            laptime = driver_lap['LapTime'].dt.total_seconds()
-            telemetry = driver_lap.get_telemetry()
+            laptime = telemetry['LapTimeS'].iat[0]
             quali_velocity_plot.add_trace(
                 go.Scatter(
                     x=telemetry['Distance'],
                     y=telemetry['Speed'],
                     name=driver,
                     mode='lines',
-                    line=dict(color=f"rgba({driver_colour})"),
+                    line=dict(color=self.driver_colour(driver)),
                     hovertemplate = hover_template,
                     customdata=[laptime]*len(telemetry['Distance'])))
 
         quali_velocity_plot.update_layout(title=f"Velocity Trace over {selected_event} - Fastest Laps", xaxis_title="Distance (m)", yaxis_title="Velocity (m/s)")
         return quali_velocity_plot
+
+    def create_race_gaps_plot(self, raceplot_long, race_event_laps, selected_event):
+        
+        driver_order = (
+            race_event_laps.sort_values("LapNumber")
+            .groupby("Driver")["Position"]
+            .last()
+            .sort_values()
+            .index
+            .tolist()
+        )
+
+        race_gaps_plot = go.Figure()
+
+        for driver in driver_order:
+
+            df = raceplot_long[
+                raceplot_long["Driver"] == driver
+            ]
+
+            race_gaps_plot.add_trace(
+                go.Scatter(
+                    x=df["RacePosition"],
+                    y=df["GapToLeader"],
+                    mode="lines",
+                    name=driver,
+
+                    line=dict(
+                        color=self.driver_colour(driver)
+                    ),
+
+                    customdata=df[["LapNumber", "Sector"]],
+
+                    hovertemplate=(
+                        "Lap %{customdata[0]}<br>"
+                        "%{customdata[1]}<br>"
+                        "Gap: %{y:.3f}s"
+                        "<extra>%{fullData.name}</extra>"
+                    ),
+                )
+            )
+
+        race_gaps_plot.update_layout(
+            title=f"Gap to Leader by Sector over {selected_event}",
+            xaxis_title="Lap",
+            yaxis_title="Gap to Leader (s)",
+            height=700,
+            width=1000,
+        )
+        race_gaps_plot.update_yaxes(autorange="reversed")
+
+        return race_gaps_plot
+
+    def create_overtaking_heatmap_plot(self, bin_counts, segments):
+        colorscale = pc.sequential.Reds
+        def map_to_color(value, vmin, vmax, colorscale):
+            # Normalize 0–1
+            t = (value - vmin) / (vmax - vmin) if vmax > vmin else 0
+            # Pick index
+            idx = int(t * (len(colorscale) - 1))
+            return colorscale[idx]
+
+        vmin = bin_counts.min()
+        vmax = bin_counts.max()
+
+        fig = go.Figure()
+
+        for seg in segments:
+            color_hex = map_to_color(seg["count"], vmin, vmax, colorscale)
+
+            fig.add_trace(
+                go.Scatter(
+                    x=seg["x"],
+                    y=seg["y"],
+                    mode="lines",
+                    line=dict(color=color_hex, width=6),
+                    hoverinfo="text",
+                    text=f"Overtakes: {seg['count']}"
+                )
+            )
+
+        fig.update_layout(
+            title="Overtake Density Track Map",
+            xaxis=dict(scaleanchor="y", scaleratio=1),
+            width=900,
+            height=700,
+            showlegend=False
+        )
+        return fig
+
+    def create_pit_vs_stay_plot(self, pit_vs_stay, decision, strategy_inputs):
+        pit_vs_stay_plot = go.Figure()
+        decision_colour = "green" if decision['pit_now'] else "red"
+
+        pit_vs_stay_plot.add_scatter(
+            x=pit_vs_stay["LapsAhead"],
+            y=pit_vs_stay["CumulativeGain"],
+            mode="lines",
+            name="Pit now vs stay out",
+            line=dict(color=decision_colour, width=3),
+            fill="tozeroy",
+            hovertemplate="Lap +%{x}: %{y:+.1f} s<extra></extra>",
+        )
+        pit_vs_stay_plot.add_hline(y=0, line_dash="dash", line_color="grey")
+        if decision['break_even_lap'] is not None:
+            pit_vs_stay_plot.add_vline(
+                x=decision['break_even_lap'],
+                line_dash="dot",
+                line_color="grey",
+                annotation_text=f"Break-even: lap +{decision['break_even_lap']}",
+            )
+
+        pit_vs_stay_plot.update_layout(
+            title=(
+                f"{'PIT NOW' if decision['pit_now'] else 'STAY OUT'} - "
+                f"{strategy_inputs['current_compound']} ({strategy_inputs['tyre_age']} laps old) -> "
+                f"{strategy_inputs['new_compound']}, {strategy_inputs['laps_left']} laps to go"
+            ),
+            xaxis_title="Laps from now",
+            yaxis_title="Cumulative time gained by pitting (s)",
+            template="plotly_white",
+            showlegend=False,
+        )
+        return pit_vs_stay_plot
+
+    def create_pu_elements_vs_standings_plot(self, drivers_standings_vs_pu_elements):
+        pu_elements_vs_standings_plot = go.Figure()
+        # PU element counts only exist for the season the FIA reports are scraped for, other seasons show the standings alone
+        has_pu_elements = drivers_standings_vs_pu_elements[PU_COLUMNS].notna().any().any()
+
+        for driver in drivers_standings_vs_pu_elements['Driver'].unique():
+            print(f"Creating plot for {driver}")
+            driver_data = drivers_standings_vs_pu_elements[drivers_standings_vs_pu_elements['Driver'] == driver]
+            # x axis should be the events in chronological order, y axis should be the championship points, and the size of the marker should be the number of power unit elements used
+            pu_elements = driver_data[PU_COLUMNS].sum(axis=1)
+            if not has_pu_elements:
+                pu_elements_vs_standings_plot.add_trace(
+                    go.Scatter(
+                        x=driver_data['Event'],
+                        y=driver_data['Points'],
+                        mode='lines+markers',
+                        name=driver,
+                        line=dict(color=self.driver_colour(driver)),
+                        hovertemplate="Event: %{x}<br>Championship Points: %{y}<extra></extra>",
+                    )
+                )
+                continue
+            pu_elements_vs_standings_plot.add_trace(
+                go.Scatter(
+                    x=driver_data['Event'],
+                    y=driver_data['Points'],
+                    mode='lines+markers',
+                    name=driver,
+                    line=dict(color=self.driver_colour(driver)),
+                    marker=dict(size=pu_elements, sizemode='area', sizeref=2.*max(max(pu_elements), 1)/(40.**2), sizemin=4),
+                    hovertemplate="Event: %{x}<br>Championship Points: %{y}<br>PU Elements: %{customdata}<extra></extra>",
+                    customdata=pu_elements
+                )
+            )
+
+        pu_elements_vs_standings_plot.update_layout(
+            title="Drivers Championship Standings vs Power Unit Elements Used" if has_pu_elements else "Drivers Championship Standings",
+            xaxis_title="Events",
+            yaxis_title="Championship Points"
+        )
+
+        return pu_elements_vs_standings_plot
